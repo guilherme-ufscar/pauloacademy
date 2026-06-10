@@ -11,7 +11,7 @@ export default function ProfessoresPage() {
   const [professors, setProfessors] = useState<Professor[]>([])
   const [loading, setLoading] = useState(true)
 
-  const load = () => api.get('/professors/all').then(r => setProfessors(r.data)).finally(() => setLoading(false))
+  const load = () => { api.get('/professors/all').then(r => setProfessors(r.data)).finally(() => setLoading(false)) }
   useEffect(load, [])
 
   const remove = async (id: number) => {
