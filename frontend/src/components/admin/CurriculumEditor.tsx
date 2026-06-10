@@ -2,19 +2,19 @@
 import { useState } from 'react'
 import { Plus, Trash2, GripVertical, ChevronDown, ChevronUp } from 'lucide-react'
 
-interface Discipline { name: string; order_index: number }
-interface Module { name: string; workload: number; order_index: number; disciplines: Discipline[] }
+export interface CurriculumDiscipline { name: string; order_index: number }
+export interface CurriculumModule { name: string; workload: number; order_index: number; disciplines: CurriculumDiscipline[] }
 
 interface Props {
-  value: Module[]
-  onChange: (modules: Module[]) => void
+  value: CurriculumModule[]
+  onChange: (modules: CurriculumModule[]) => void
 }
 
 export default function CurriculumEditor({ value, onChange }: Props) {
   const [expanded, setExpanded] = useState<number[]>([0])
 
   const addModule = () => {
-    const newMod: Module = { name: '', workload: 0, order_index: value.length, disciplines: [] }
+    const newMod: CurriculumModule = { name: '', workload: 0, order_index: value.length, disciplines: [] }
     onChange([...value, newMod])
     setExpanded(e => [...e, value.length])
   }

@@ -6,9 +6,9 @@ import Link from 'next/link'
 import toast from 'react-hot-toast'
 import ImageUpload from '@/components/admin/ImageUpload'
 import RichTextEditor from '@/components/admin/RichTextEditor'
-import CurriculumEditor from '@/components/admin/CurriculumEditor'
+import CurriculumEditor, { type CurriculumModule } from '@/components/admin/CurriculumEditor'
 import api from '@/lib/api'
-import type { Course, Professor, Module } from '@/types'
+import type { Course, Professor } from '@/types'
 
 interface Props {
   initialData?: Partial<Course>
@@ -44,7 +44,14 @@ export default function CourseForm({ initialData, onSubmit }: Props) {
     seo_title: initialData?.seo_title || '',
     seo_description: initialData?.seo_description || '',
     selected_professors: (initialData?.professors || []).map(p => p.id),
-    modules: (initialData?.modules || []) as Module[],
+    modules: ((initialData?.modules || []).map(m => ({
+      name: m.name,
+      workload: m.workload || 0,
+      order_index: m.order_index || 0,
+      disciplines: (m.disciplines || []).map(d =>
+        typeof d === 'string' ? { name: d, order_index: 0 } : { name: d.name, order_index: (d as { order_index?: number }).order_index || 0 }
+      ),
+    }))) as CurriculumModule[],
   })
 
   useEffect(() => {
