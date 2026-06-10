@@ -24,7 +24,7 @@ export default function CurriculumEditor({ value, onChange }: Props) {
     setExpanded(e => e.filter(x => x !== i).map(x => x > i ? x - 1 : x))
   }
 
-  const updateModule = (i: number, patch: Partial<Module>) => {
+  const updateModule = (i: number, patch: Partial<CurriculumModule>) => {
     onChange(value.map((m, idx) => idx === i ? { ...m, ...patch } : m))
   }
 
