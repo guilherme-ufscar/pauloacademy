@@ -18,7 +18,7 @@ export default function PedidosPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
 
-  const load = () => api.get('/orders').then(r => setOrders(r.data)).finally(() => setLoading(false))
+  const load = () => { api.get('/orders').then(r => setOrders(r.data)).finally(() => setLoading(false)) }
   useEffect(load, [])
 
   const updateStatus = async (id: number, status: string) => {
