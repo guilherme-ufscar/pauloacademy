@@ -36,7 +36,7 @@ export default async function HomePage() {
   const about = content.about || {}
   const footer = content.footer || {}
 
-  const categories = [...new Set((courses as Course[]).map(c => c.category))]
+  const categories = Array.from(new Set((courses as Course[]).map(c => c.category)))
 
   return (
     <>
