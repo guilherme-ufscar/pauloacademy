@@ -129,6 +129,26 @@ CREATE TABLE IF NOT EXISTS orders (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Seções extras por curso (descrições adicionais)
+CREATE TABLE IF NOT EXISTS course_extra_sections (
+  id SERIAL PRIMARY KEY,
+  course_id INTEGER REFERENCES courses(id) ON DELETE CASCADE,
+  title VARCHAR(500) NOT NULL,
+  content TEXT,
+  image VARCHAR(500),
+  order_index INTEGER DEFAULT 0
+);
+
+-- Migração: preço original e percentual de desconto
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='courses' AND column_name='price_original') THEN
+    ALTER TABLE courses ADD COLUMN price_original DECIMAL(10,2) DEFAULT 0;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='courses' AND column_name='discount_percent') THEN
+    ALTER TABLE courses ADD COLUMN discount_percent DECIMAL(5,2) DEFAULT 0;
+  END IF;
+END $$;
+
 -- Trigger para updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$

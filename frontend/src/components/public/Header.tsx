@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { Menu, X, GraduationCap } from 'lucide-react'
+import { Menu, X, GraduationCap, Instagram, Facebook, Youtube } from 'lucide-react'
 
 const categories = [
   { label: 'EJA', href: '/#cursos' },
@@ -10,8 +10,20 @@ const categories = [
   { label: 'Técnico', href: '/#cursos' },
 ]
 
-export default function Header() {
+interface SocialData {
+  instagram?: string
+  facebook?: string
+  youtube?: string
+  whatsapp?: string
+}
+
+interface Props {
+  socialData?: SocialData
+}
+
+export default function Header({ socialData }: Props) {
   const [open, setOpen] = useState(false)
+  const d = socialData || {}
 
   return (
     <header className="bg-primary-900 text-white sticky top-0 z-50 shadow-lg">
@@ -33,8 +45,27 @@ export default function Header() {
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
+            {/* Redes Sociais */}
+            {d.instagram && (
+              <a href={d.instagram} target="_blank" rel="noopener noreferrer"
+                 className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary-700 transition-colors text-blue-300 hover:text-white">
+                <Instagram size={18} />
+              </a>
+            )}
+            {d.facebook && (
+              <a href={d.facebook} target="_blank" rel="noopener noreferrer"
+                 className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary-700 transition-colors text-blue-300 hover:text-white">
+                <Facebook size={18} />
+              </a>
+            )}
+            {d.youtube && (
+              <a href={d.youtube} target="_blank" rel="noopener noreferrer"
+                 className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary-700 transition-colors text-blue-300 hover:text-white">
+                <Youtube size={18} />
+              </a>
+            )}
             <a
-              href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999'}`}
+              href={`https://wa.me/${d.whatsapp || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999'}`}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-primary text-sm py-2"
@@ -57,8 +88,28 @@ export default function Header() {
               {c.label}
             </a>
           ))}
+          <div className="flex gap-3 pt-1">
+            {d.instagram && (
+              <a href={d.instagram} target="_blank" rel="noopener noreferrer"
+                 className="w-9 h-9 bg-primary-700 rounded-lg flex items-center justify-center text-blue-300 hover:text-white">
+                <Instagram size={18} />
+              </a>
+            )}
+            {d.facebook && (
+              <a href={d.facebook} target="_blank" rel="noopener noreferrer"
+                 className="w-9 h-9 bg-primary-700 rounded-lg flex items-center justify-center text-blue-300 hover:text-white">
+                <Facebook size={18} />
+              </a>
+            )}
+            {d.youtube && (
+              <a href={d.youtube} target="_blank" rel="noopener noreferrer"
+                 className="w-9 h-9 bg-primary-700 rounded-lg flex items-center justify-center text-blue-300 hover:text-white">
+                <Youtube size={18} />
+              </a>
+            )}
+          </div>
           <a
-            href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999'}`}
+            href={`https://wa.me/${d.whatsapp || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999'}`}
             target="_blank"
             rel="noopener noreferrer"
             className="btn-primary text-sm py-2 mt-2 w-full justify-center"

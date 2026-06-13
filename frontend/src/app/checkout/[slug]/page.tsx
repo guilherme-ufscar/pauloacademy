@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
-import { CreditCard, Tag, CheckCircle, ArrowLeft, Loader2 } from 'lucide-react'
+import { Tag, CheckCircle, ArrowLeft, Loader2 } from 'lucide-react'
 import api from '@/lib/api'
 import type { Course, Coupon } from '@/types'
 
@@ -14,7 +14,7 @@ const schema = z.object({
   customer_name: z.string().min(3, 'Nome obrigatório'),
   customer_email: z.string().email('E-mail inválido'),
   customer_phone: z.string().min(10, 'Telefone inválido'),
-  payment_method: z.enum(['pix', 'credit_card']),
+  payment_method: z.enum(['pix', 'credit_card', 'boleto']),
 })
 
 type FormData = z.infer<typeof schema>
@@ -132,15 +132,16 @@ export default function CheckoutPage() {
 
                 <div>
                   <label className="label">Forma de Pagamento *</label>
-                  <div className="grid grid-cols-2 gap-3 mt-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-1">
                     {[
-                      { value: 'pix', label: 'PIX (à vista)', desc: 'Melhor preço' },
-                      { value: 'credit_card', label: 'Cartão de Crédito', desc: `${course.installments}x parcelado` },
+                      { value: 'pix', label: 'PIX', desc: 'À vista — melhor preço', icon: '🔵' },
+                      { value: 'credit_card', label: 'Cartão de Crédito', desc: `até ${course.installments}x parcelado`, icon: '💳' },
+                      { value: 'boleto', label: 'Boleto Bancário', desc: 'Vence em 3 dias úteis', icon: '🧾' },
                     ].map(opt => (
                       <label key={opt.value}
                              className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === opt.value ? 'border-primary-600 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}>
                         <input type="radio" value={opt.value} {...register('payment_method')} className="hidden" />
-                        <CreditCard size={20} className={paymentMethod === opt.value ? 'text-primary-600' : 'text-gray-400'} />
+                        <span className="text-xl">{opt.icon}</span>
                         <div>
                           <p className="font-semibold text-sm text-gray-800">{opt.label}</p>
                           <p className="text-xs text-gray-500">{opt.desc}</p>

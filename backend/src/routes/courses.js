@@ -8,7 +8,9 @@ router.get('/', async (req, res) => {
   try {
     const { category } = req.query
     let query = `SELECT id, slug, title, subtitle, cover_image, workload, modality, duration, category,
-                        price_pix, price_installment, installments, installment_value, active, featured, vacancy_count, offer_expires_at
+                        price_pix, price_installment, installments, installment_value,
+                        price_original, discount_percent,
+                        active, featured, vacancy_count, offer_expires_at
                  FROM courses WHERE active = true`
     const params = []
     if (category) {
@@ -29,7 +31,9 @@ router.get('/all', requireAuth, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT id, slug, title, subtitle, cover_image, workload, modality, duration, category,
-              price_pix, price_installment, installments, installment_value, active, featured, created_at
+              price_pix, price_installment, installments, installment_value,
+              price_original, discount_percent,
+              active, featured, created_at
        FROM courses ORDER BY created_at DESC`
     )
     res.json(rows)
@@ -66,6 +70,14 @@ router.get('/slug/:slug', async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Curso não encontrado' })
     const course = rows[0]
     course.modules = course.modules.sort((a, b) => a.order_index - b.order_index)
+
+    // Seções extras
+    const { rows: sections } = await pool.query(
+      'SELECT id, title, content, image, order_index FROM course_extra_sections WHERE course_id = $1 ORDER BY order_index',
+      [course.id]
+    )
+    course.extra_sections = sections
+
     res.json(course)
   } catch (err) {
     console.error(err)
@@ -97,6 +109,14 @@ router.get('/:id', requireAuth, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Curso não encontrado' })
     const course = rows[0]
     course.modules = course.modules.sort((a, b) => a.order_index - b.order_index)
+
+    // Seções extras
+    const { rows: sections } = await pool.query(
+      'SELECT id, title, content, image, order_index FROM course_extra_sections WHERE course_id = $1 ORDER BY order_index',
+      [course.id]
+    )
+    course.extra_sections = sections
+
     res.json(course)
   } catch (err) {
     res.status(500).json({ error: 'Erro ao buscar curso' })
@@ -109,8 +129,9 @@ router.post('/', requireAuth, async (req, res) => {
     const {
       title, subtitle, description, cover_image, workload, modality, duration, category,
       price_pix, price_installment, installments, installment_value,
+      price_original, discount_percent,
       active, featured, vacancy_count, offer_expires_at, whatsapp_message, seo_title, seo_description,
-      professors, modules
+      professors, modules, extra_sections
     } = req.body
 
     const slug = slugify(title, { lower: true, strict: true })
@@ -118,10 +139,12 @@ router.post('/', requireAuth, async (req, res) => {
     const { rows } = await pool.query(
       `INSERT INTO courses (slug, title, subtitle, description, cover_image, workload, modality, duration, category,
                             price_pix, price_installment, installments, installment_value,
+                            price_original, discount_percent,
                             active, featured, vacancy_count, offer_expires_at, whatsapp_message, seo_title, seo_description)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) RETURNING *`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING *`,
       [slug, title, subtitle, description, cover_image, workload, modality, duration, category,
        price_pix, price_installment, installments, installment_value,
+       price_original || 0, discount_percent || 0,
        active ?? true, featured ?? false, vacancy_count, offer_expires_at || null, whatsapp_message, seo_title, seo_description]
     )
 
@@ -133,6 +156,9 @@ router.post('/', requireAuth, async (req, res) => {
     }
     if (modules?.length) {
       await saveModules(course.id, modules)
+    }
+    if (extra_sections?.length) {
+      await saveExtraSections(course.id, extra_sections)
     }
 
     res.status(201).json(course)
@@ -148,8 +174,9 @@ router.put('/:id', requireAuth, async (req, res) => {
     const {
       title, subtitle, description, cover_image, workload, modality, duration, category,
       price_pix, price_installment, installments, installment_value,
+      price_original, discount_percent,
       active, featured, vacancy_count, offer_expires_at, whatsapp_message, seo_title, seo_description,
-      professors, modules
+      professors, modules, extra_sections
     } = req.body
 
     const id = req.params.id
@@ -159,11 +186,13 @@ router.put('/:id', requireAuth, async (req, res) => {
     await pool.query(
       `UPDATE courses SET title=$1, subtitle=$2, description=$3, cover_image=$4, workload=$5, modality=$6,
                           duration=$7, category=$8, price_pix=$9, price_installment=$10, installments=$11,
-                          installment_value=$12, active=$13, featured=$14, vacancy_count=$15,
-                          offer_expires_at=$16, whatsapp_message=$17, seo_title=$18, seo_description=$19
-       WHERE id=$20`,
+                          installment_value=$12, price_original=$13, discount_percent=$14,
+                          active=$15, featured=$16, vacancy_count=$17,
+                          offer_expires_at=$18, whatsapp_message=$19, seo_title=$20, seo_description=$21
+       WHERE id=$22`,
       [title, subtitle, description, cover_image, workload, modality, duration, category,
        price_pix, price_installment, installments, installment_value,
+       price_original || 0, discount_percent || 0,
        active, featured, vacancy_count, offer_expires_at || null, whatsapp_message, seo_title, seo_description,
        id]
     )
@@ -181,6 +210,10 @@ router.put('/:id', requireAuth, async (req, res) => {
       await pool.query('DELETE FROM course_modules WHERE course_id = $1', [id])
       if (modules?.length) await saveModules(id, modules)
     }
+
+    // Seções extras
+    await pool.query('DELETE FROM course_extra_sections WHERE course_id = $1', [id])
+    if (extra_sections?.length) await saveExtraSections(id, extra_sections)
 
     const { rows } = await pool.query('SELECT * FROM courses WHERE id = $1', [id])
     res.json(rows[0])
@@ -218,6 +251,16 @@ async function saveModules(courseId, modules) {
         )
       }
     }
+  }
+}
+
+async function saveExtraSections(courseId, sections) {
+  for (let i = 0; i < sections.length; i++) {
+    const s = sections[i]
+    await pool.query(
+      'INSERT INTO course_extra_sections (course_id, title, content, image, order_index) VALUES ($1, $2, $3, $4, $5)',
+      [courseId, s.title, s.content || '', s.image || '', i]
+    )
   }
 }
 

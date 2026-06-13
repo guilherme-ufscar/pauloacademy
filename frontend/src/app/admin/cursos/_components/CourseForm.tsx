@@ -1,14 +1,14 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Save, Loader2, ArrowLeft, Calculator } from 'lucide-react'
+import { Save, Loader2, ArrowLeft, Calculator, Plus, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import ImageUpload from '@/components/admin/ImageUpload'
 import RichTextEditor from '@/components/admin/RichTextEditor'
 import CurriculumEditor, { type CurriculumModule } from '@/components/admin/CurriculumEditor'
 import api from '@/lib/api'
-import type { Course, Professor } from '@/types'
+import type { Course, Professor, ExtraSection } from '@/types'
 
 interface Props {
   initialData?: Partial<Course>
@@ -36,6 +36,8 @@ export default function CourseForm({ initialData, onSubmit }: Props) {
     price_installment: initialData?.price_installment || '',
     installments: initialData?.installments || 12,
     installment_value: initialData?.installment_value || '',
+    price_original: initialData?.price_original || '',
+    discount_percent: initialData?.discount_percent || '',
     active: initialData?.active ?? true,
     featured: initialData?.featured ?? false,
     vacancy_count: initialData?.vacancy_count || '',
@@ -53,6 +55,10 @@ export default function CourseForm({ initialData, onSubmit }: Props) {
       ),
     }))) as CurriculumModule[],
   })
+
+  const [extraSections, setExtraSections] = useState<ExtraSection[]>(
+    (initialData?.extra_sections || []).map((s, i) => ({ ...s, order_index: i }))
+  )
 
   useEffect(() => {
     api.get('/professors/all').then(r => setProfessors(r.data)).catch(() => {})
@@ -77,6 +83,7 @@ export default function CourseForm({ initialData, onSubmit }: Props) {
         ...form,
         professors: form.selected_professors,
         modules: form.modules,
+        extra_sections: extraSections,
       })
     } catch {
       toast.error('Erro ao salvar curso')
@@ -88,6 +95,18 @@ export default function CourseForm({ initialData, onSubmit }: Props) {
   const toggleProfessor = (id: number) => {
     const sel = form.selected_professors
     set('selected_professors', sel.includes(id) ? sel.filter(x => x !== id) : [...sel, id])
+  }
+
+  const addSection = () => {
+    setExtraSections(prev => [...prev, { title: '', content: '', image: '', order_index: prev.length }])
+  }
+
+  const removeSection = (i: number) => {
+    setExtraSections(prev => prev.filter((_, idx) => idx !== i).map((s, idx) => ({ ...s, order_index: idx })))
+  }
+
+  const updateSection = (i: number, key: keyof ExtraSection, val: string) => {
+    setExtraSections(prev => prev.map((s, idx) => idx === i ? { ...s, [key]: val } : s))
   }
 
   return (
@@ -137,23 +156,98 @@ export default function CourseForm({ initialData, onSubmit }: Props) {
             </div>
           </div>
           <div>
-            <label className="label">Descrição (conteúdo da página)</label>
+            <label className="label">Descrição principal (aparece na página do curso)</label>
             <RichTextEditor value={form.description} onChange={v => set('description', v)} />
           </div>
           <ImageUpload value={form.cover_image} onChange={v => set('cover_image', v)} label="Imagem de Capa" />
         </div>
       </div>
 
+      {/* Seções Extras */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="font-bold text-gray-900">Seções Adicionais de Descrição</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Crie blocos extras com título, texto e imagem para detalhar o curso</p>
+          </div>
+          <button type="button" onClick={addSection} className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium">
+            <Plus size={16} /> Adicionar Seção
+          </button>
+        </div>
+
+        {extraSections.length === 0 && (
+          <p className="text-sm text-gray-400 text-center py-6 border-2 border-dashed border-gray-200 rounded-xl">
+            Nenhuma seção extra. Clique em "Adicionar Seção" para criar.
+          </p>
+        )}
+
+        <div className="space-y-6">
+          {extraSections.map((sec, i) => (
+            <div key={i} className="border border-gray-200 rounded-xl p-5 space-y-4 relative">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-semibold text-primary-600 uppercase tracking-wide">Seção {i + 1}</span>
+                <button type="button" onClick={() => removeSection(i)}
+                        className="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50">
+                  <Trash2 size={16} />
+                </button>
+              </div>
+              <div>
+                <label className="label">Título da seção</label>
+                <input
+                  value={sec.title}
+                  onChange={e => updateSection(i, 'title', e.target.value)}
+                  className="input"
+                  placeholder="Ex: Por que escolher este curso?"
+                />
+              </div>
+              <div>
+                <label className="label">Conteúdo</label>
+                <RichTextEditor
+                  value={sec.content}
+                  onChange={v => updateSection(i, 'content', v)}
+                />
+              </div>
+              <div>
+                <label className="label">Imagem da seção (opcional)</label>
+                <ImageUpload
+                  value={sec.image || ''}
+                  onChange={v => updateSection(i, 'image', v)}
+                  label="Imagem da seção"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Preços */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <h2 className="font-bold text-gray-900 mb-4">Preços e Pagamento</h2>
+
+        {/* Preço com desconto */}
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+          <p className="text-sm font-semibold text-amber-800 mb-3">Preço Original com Desconto (opcional)</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label">Preço de Tabela (riscado)</label>
+              <input type="number" step="0.01" value={form.price_original} onChange={e => set('price_original', e.target.value)} className="input" placeholder="Ex: 2700.00" />
+              <p className="text-xs text-gray-400 mt-1">Aparece riscado para mostrar economia</p>
+            </div>
+            <div>
+              <label className="label">% de Desconto exibido</label>
+              <input type="number" step="1" min="0" max="100" value={form.discount_percent} onChange={e => set('discount_percent', e.target.value)} className="input" placeholder="Ex: 50" />
+              <p className="text-xs text-gray-400 mt-1">Aparece como badge (ex: 50% OFF)</p>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <label className="label">Preço à Vista (PIX)</label>
             <input type="number" step="0.01" value={form.price_pix} onChange={e => set('price_pix', e.target.value)} className="input" placeholder="1350.00" />
           </div>
           <div>
-            <label className="label">Preço Parcelado</label>
+            <label className="label">Preço Parcelado (cartão)</label>
             <input type="number" step="0.01" value={form.price_installment} onChange={e => set('price_installment', e.target.value)} className="input" placeholder="1548.00" />
           </div>
           <div>
@@ -172,7 +266,7 @@ export default function CourseForm({ initialData, onSubmit }: Props) {
           </div>
         </div>
         <p className="text-xs text-gray-400 mt-2">
-          Clique no botão calculadora para calcular automaticamente o valor da parcela.
+          Aceita PIX, cartão de crédito e boleto bancário via Mercado Pago.
         </p>
       </div>
 

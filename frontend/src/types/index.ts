@@ -1,3 +1,11 @@
+export interface ExtraSection {
+  id?: number
+  title: string
+  content: string
+  image?: string
+  order_index: number
+}
+
 export interface Course {
   id: number
   slug: string
@@ -13,6 +21,8 @@ export interface Course {
   price_installment: number
   installments: number
   installment_value: number
+  price_original?: number
+  discount_percent?: number
   active: boolean
   featured: boolean
   vacancy_count?: number
@@ -23,6 +33,7 @@ export interface Course {
   professors?: Professor[]
   modules?: Module[]
   testimonials?: Testimonial[]
+  extra_sections?: ExtraSection[]
   created_at: string
   updated_at: string
 }

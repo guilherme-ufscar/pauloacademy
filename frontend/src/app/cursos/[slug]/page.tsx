@@ -44,6 +44,8 @@ export default async function CoursePage({ params }: { params: { slug: string } 
 
   const footer = content.footer || {}
   const pricePix = Number(course.price_pix || 0)
+  const priceOriginal = Number(course.price_original || 0)
+  const discountPercent = Number(course.discount_percent || 0)
   const installmentValue = Number(course.installment_value || 0)
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999'
   const whatsappMsg = encodeURIComponent(
@@ -53,7 +55,7 @@ export default async function CoursePage({ params }: { params: { slug: string } 
 
   return (
     <>
-      <Header />
+      <Header socialData={footer} />
 
       {/* Hero do Curso */}
       <section className="bg-gradient-to-br from-primary-900 to-primary-800 text-white py-16">
@@ -102,6 +104,17 @@ export default async function CoursePage({ params }: { params: { slug: string } 
                 <p className="text-sm text-gray-500 mb-1">Investimento</p>
                 {pricePix > 0 ? (
                   <>
+                    {/* Preço original riscado + badge de desconto */}
+                    {priceOriginal > 0 && discountPercent > 0 && (
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-gray-400 line-through text-base">
+                          {priceOriginal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </span>
+                        <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                          {discountPercent}% OFF
+                        </span>
+                      </div>
+                    )}
                     <p className="text-xs text-green-600 font-medium mb-0.5">À vista no PIX</p>
                     <p className="text-4xl font-black text-primary-900">
                       {pricePix.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
@@ -111,9 +124,11 @@ export default async function CoursePage({ params }: { params: { slug: string } 
                         ou {course.installments}x de{' '}
                         <strong className="text-primary-700">
                           {installmentValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                        </strong>
+                        </strong>{' '}
+                        no cartão
                       </p>
                     )}
+                    <p className="text-xs text-gray-400 mt-1">Aceita PIX · Cartão · Boleto</p>
                   </>
                 ) : (
                   <p className="text-2xl font-bold text-primary-700">Consulte condições</p>
@@ -159,6 +174,28 @@ export default async function CoursePage({ params }: { params: { slug: string } 
           )}
         </div>
       </section>
+
+      {/* Seções Extras */}
+      {course.extra_sections && course.extra_sections.length > 0 && course.extra_sections.map((sec, i) => (
+        <section key={sec.id || i} className={`py-16 ${i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl font-bold text-primary-900 mb-8">{sec.title}</h2>
+            <div className={`${sec.image ? 'grid grid-cols-1 md:grid-cols-2 gap-10 items-start' : ''}`}>
+              {sec.content && (
+                <div
+                  className="prose-content text-gray-700 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: sec.content }}
+                />
+              )}
+              {sec.image && (
+                <div className="relative h-64 md:h-80 rounded-2xl overflow-hidden shadow-lg">
+                  <Image src={sec.image} alt={sec.title} fill className="object-cover" />
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      ))}
 
       {/* Grade Curricular */}
       {course.modules && course.modules.length > 0 && (

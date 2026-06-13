@@ -40,7 +40,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <Header />
+      <Header socialData={footer} />
 
       {/* Hero */}
       <section className="relative bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 text-white overflow-hidden">
