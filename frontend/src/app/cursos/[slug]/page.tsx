@@ -47,7 +47,7 @@ export default async function CoursePage({ params }: { params: { slug: string } 
   const priceOriginal = Number(course.price_original || 0)
   const discountPercent = Number(course.discount_percent || 0)
   const installmentValue = Number(course.installment_value || 0)
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999'
+  const whatsappNumber = (footer.whatsapp as string) || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999'
   const whatsappMsg = encodeURIComponent(
     course.whatsapp_message || `Olá! Tenho interesse no curso ${course.title}.`
   )

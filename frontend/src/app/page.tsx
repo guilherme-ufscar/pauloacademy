@@ -67,7 +67,7 @@ export default async function HomePage() {
                 {hero.cta_text || 'Ver Cursos'} <ChevronRight size={20} />
               </a>
               <a
-                href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999'}`}
+                href={`https://wa.me/${(footer as Record<string,string>).whatsapp || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999'}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-outline text-base px-8 py-4"
@@ -172,7 +172,7 @@ export default async function HomePage() {
             Fale com nosso time e tire todas as suas dúvidas antes de se matricular.
           </p>
           <a
-            href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999'}`}
+            href={`https://wa.me/${(footer as Record<string,string>).whatsapp || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999'}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-white text-accent-700 hover:bg-orange-50 font-bold text-lg px-10 py-4 rounded-xl shadow-xl transition-all hover:-translate-y-1"

@@ -1,7 +1,19 @@
 import Link from 'next/link'
 import { XCircle, ArrowLeft, MessageCircle } from 'lucide-react'
 
-export default function ErroPage() {
+async function getWhatsApp() {
+  const base = process.env.INTERNAL_API_URL || 'http://backend:3001'
+  try {
+    const res = await fetch(`${base}/content`, { next: { revalidate: 300 } })
+    if (!res.ok) return null
+    const data = await res.json()
+    return (data.footer?.whatsapp as string) || null
+  } catch { return null }
+}
+
+export default async function ErroPage() {
+  const whatsapp = await getWhatsApp() || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999'
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl shadow-lg p-10 max-w-md w-full text-center">
@@ -17,7 +29,7 @@ export default function ErroPage() {
             <ArrowLeft size={18} /> Voltar ao início
           </Link>
           <a
-            href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5511999999999'}`}
+            href={`https://wa.me/${whatsapp}`}
             target="_blank" rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-lg transition-colors"
           >

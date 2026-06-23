@@ -17,8 +17,8 @@ async function getContent() {
 
 export default async function SobreNosPage() {
   const content = await getContent()
-  const data = (content.sobre_nos as Record<string, unknown>) || {}
-  const footer = (content.footer as Record<string, unknown>) || {}
+  const data = (content.sobre_nos || {}) as Record<string, string | string[]>
+  const footer = (content.footer || {}) as Record<string, string>
   const values = (data.values as string[]) || []
 
   return (
