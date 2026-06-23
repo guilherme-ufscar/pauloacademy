@@ -46,27 +46,69 @@ router.post('/', async (req, res) => {
 
     let paymentUrl = null
     let paymentId = null
+    let pixQrCode = null
+    let pixQrCodeBase64 = null
+    let boletoUrl = null
+    let boletoBarcode = null
 
-    // Integração Mercado Pago
     if (process.env.MERCADOPAGO_ACCESS_TOKEN) {
       try {
-        const { MercadoPagoConfig, Preference } = require('mercadopago')
+        const { MercadoPagoConfig, Payment } = require('mercadopago')
         const mp = new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN })
-        const preference = new Preference(mp)
-        const result = await preference.create({
-          body: {
-            items: [{ title: course.title, quantity: 1, unit_price: Math.round(amount * 100) / 100 }],
-            payer: { name: customer_name, email: customer_email },
-            payment_methods: { excluded_payment_types: [], installments: course.installments },
-            back_urls: {
-              success: `${process.env.APP_URL || ''}/checkout/sucesso`,
-              failure: `${process.env.APP_URL || ''}/checkout/erro`,
-            },
-            auto_approve: false,
-          }
-        })
-        paymentId = result.id
-        paymentUrl = result.init_point
+        const paymentApi = new Payment(mp)
+        const nameParts = customer_name.trim().split(' ')
+        const firstName = nameParts[0]
+        const lastName = nameParts.slice(1).join(' ') || firstName
+
+        if (payment_method === 'pix') {
+          const result = await paymentApi.create({
+            body: {
+              transaction_amount: Math.round(amount * 100) / 100,
+              payment_method_id: 'pix',
+              payer: { email: customer_email, first_name: firstName, last_name: lastName },
+              description: course.title,
+            }
+          })
+          paymentId = String(result.id)
+          pixQrCode = result.point_of_interaction?.transaction_data?.qr_code
+          pixQrCodeBase64 = result.point_of_interaction?.transaction_data?.qr_code_base64
+        } else if (payment_method === 'boleto') {
+          const cpf = req.body.customer_cpf?.replace(/\D/g, '') || ''
+          const result = await paymentApi.create({
+            body: {
+              transaction_amount: Math.round(amount * 100) / 100,
+              payment_method_id: 'bolbradesco',
+              payer: {
+                email: customer_email,
+                first_name: firstName,
+                last_name: lastName,
+                identification: { type: 'CPF', number: cpf },
+              },
+              description: course.title,
+            }
+          })
+          paymentId = String(result.id)
+          boletoUrl = result.transaction_details?.external_resource_url
+          boletoBarcode = result.barcode?.content
+        } else {
+          // cartão: usa Checkout Pro (redirect)
+          const { Preference } = require('mercadopago')
+          const preference = new Preference(mp)
+          const result = await preference.create({
+            body: {
+              items: [{ title: course.title, quantity: 1, unit_price: Math.round(amount * 100) / 100 }],
+              payer: { name: customer_name, email: customer_email },
+              payment_methods: { excluded_payment_types: [{ id: 'ticket' }, { id: 'bank_transfer' }], installments: course.installments },
+              back_urls: {
+                success: `${process.env.APP_URL || ''}/checkout/sucesso`,
+                failure: `${process.env.APP_URL || ''}/checkout/erro`,
+              },
+              auto_approve: false,
+            }
+          })
+          paymentId = result.id
+          paymentUrl = result.init_point
+        }
       } catch (mpErr) {
         console.error('Erro Mercado Pago:', mpErr.message)
       }
@@ -81,6 +123,10 @@ router.post('/', async (req, res) => {
     res.status(201).json({
       order: rows[0],
       payment_url: paymentUrl,
+      pix_qr_code: pixQrCode,
+      pix_qr_code_base64: pixQrCodeBase64,
+      boleto_url: boletoUrl,
+      boleto_barcode: boletoBarcode,
       whatsapp_fallback: buildWhatsApp(course, customer_name, amount),
     })
   } catch (err) {

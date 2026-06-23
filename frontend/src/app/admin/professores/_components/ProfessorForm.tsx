@@ -14,12 +14,15 @@ interface Props {
 export default function ProfessorForm({ initialData, onSubmit }: Props) {
   const [saving, setSaving] = useState(false)
   const [newSpecialty, setNewSpecialty] = useState('')
+  const ROLES = ['Professor', 'Coordenador de Polo', 'Supervisor Acadêmico', 'Vendedor', 'Orientador', 'Tutor']
+
   const [form, setForm] = useState({
     name: initialData?.name || '',
     bio: initialData?.bio || '',
     photo: initialData?.photo || '',
     linkedin: initialData?.linkedin || '',
     active: initialData?.active ?? true,
+    role: (initialData as { role?: string })?.role || 'Professor',
     specialties: initialData?.specialties || [] as string[],
   })
 
@@ -65,6 +68,12 @@ export default function ProfessorForm({ initialData, onSubmit }: Props) {
         <div>
           <label className="label">Nome Completo *</label>
           <input value={form.name} onChange={e => set('name', e.target.value)} className="input" placeholder="Prof. Dr. Nome Sobrenome" />
+        </div>
+        <div>
+          <label className="label">Função / Cargo</label>
+          <select value={form.role} onChange={e => set('role', e.target.value)} className="input">
+            {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
         </div>
         <div>
           <label className="label">Mini Bio (até 600 caracteres)</label>

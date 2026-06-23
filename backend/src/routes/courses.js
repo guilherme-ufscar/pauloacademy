@@ -49,6 +49,7 @@ router.get('/slug/:slug', async (req, res) => {
       `SELECT c.*,
               COALESCE(json_agg(DISTINCT jsonb_build_object(
                 'id', p.id, 'name', p.name, 'bio', p.bio, 'photo', p.photo, 'linkedin', p.linkedin,
+                'role', p.role,
                 'specialties', (SELECT json_agg(ps.name) FROM professor_specialties ps WHERE ps.professor_id = p.id)
               )) FILTER (WHERE p.id IS NOT NULL), '[]') AS professors,
               COALESCE(json_agg(DISTINCT jsonb_build_object(
@@ -78,6 +79,13 @@ router.get('/slug/:slug', async (req, res) => {
     )
     course.extra_sections = sections
 
+    // FAQs
+    const { rows: faqs } = await pool.query(
+      'SELECT id, question, answer, order_index FROM course_faqs WHERE course_id = $1 ORDER BY order_index',
+      [course.id]
+    )
+    course.faqs = faqs
+
     res.json(course)
   } catch (err) {
     console.error(err)
@@ -92,6 +100,7 @@ router.get('/:id', requireAuth, async (req, res) => {
       `SELECT c.*,
               COALESCE(json_agg(DISTINCT jsonb_build_object(
                 'id', p.id, 'name', p.name, 'bio', p.bio, 'photo', p.photo, 'linkedin', p.linkedin,
+                'role', p.role,
                 'specialties', (SELECT json_agg(ps.name) FROM professor_specialties ps WHERE ps.professor_id = p.id)
               )) FILTER (WHERE p.id IS NOT NULL), '[]') AS professors,
               COALESCE(json_agg(DISTINCT jsonb_build_object(
@@ -117,6 +126,13 @@ router.get('/:id', requireAuth, async (req, res) => {
     )
     course.extra_sections = sections
 
+    // FAQs
+    const { rows: faqs } = await pool.query(
+      'SELECT id, question, answer, order_index FROM course_faqs WHERE course_id = $1 ORDER BY order_index',
+      [course.id]
+    )
+    course.faqs = faqs
+
     res.json(course)
   } catch (err) {
     res.status(500).json({ error: 'Erro ao buscar curso' })
@@ -131,7 +147,7 @@ router.post('/', requireAuth, async (req, res) => {
       price_pix, price_installment, installments, installment_value,
       price_original, discount_percent,
       active, featured, vacancy_count, offer_expires_at, whatsapp_message, seo_title, seo_description,
-      professors, modules, extra_sections
+      professors, modules, extra_sections, faqs
     } = req.body
 
     const slug = slugify(title, { lower: true, strict: true })
@@ -160,6 +176,9 @@ router.post('/', requireAuth, async (req, res) => {
     if (extra_sections?.length) {
       await saveExtraSections(course.id, extra_sections)
     }
+    if (faqs?.length) {
+      await saveFaqs(course.id, faqs)
+    }
 
     res.status(201).json(course)
   } catch (err) {
@@ -176,7 +195,7 @@ router.put('/:id', requireAuth, async (req, res) => {
       price_pix, price_installment, installments, installment_value,
       price_original, discount_percent,
       active, featured, vacancy_count, offer_expires_at, whatsapp_message, seo_title, seo_description,
-      professors, modules, extra_sections
+      professors, modules, extra_sections, faqs
     } = req.body
 
     const id = req.params.id
@@ -215,6 +234,10 @@ router.put('/:id', requireAuth, async (req, res) => {
     await pool.query('DELETE FROM course_extra_sections WHERE course_id = $1', [id])
     if (extra_sections?.length) await saveExtraSections(id, extra_sections)
 
+    // FAQs
+    await pool.query('DELETE FROM course_faqs WHERE course_id = $1', [id])
+    if (faqs?.length) await saveFaqs(id, faqs)
+
     const { rows } = await pool.query('SELECT * FROM courses WHERE id = $1', [id])
     res.json(rows[0])
   } catch (err) {
@@ -251,6 +274,16 @@ async function saveModules(courseId, modules) {
         )
       }
     }
+  }
+}
+
+async function saveFaqs(courseId, faqs) {
+  for (let i = 0; i < faqs.length; i++) {
+    const f = faqs[i]
+    await pool.query(
+      'INSERT INTO course_faqs (course_id, question, answer, order_index) VALUES ($1, $2, $3, $4)',
+      [courseId, f.question, f.answer || '', i]
+    )
   }
 }
 

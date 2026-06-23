@@ -60,6 +60,11 @@ export default function Footer({ data }: { data?: FooterData }) {
                 </li>
               ))}
             </ul>
+            <h3 className="font-semibold text-white mt-6 mb-4">Institucional</h3>
+            <ul className="space-y-2 text-blue-300 text-sm">
+              <li><Link href="/sobre-nos" className="hover:text-white transition-colors">Sobre Nós</Link></li>
+              <li><Link href="/perguntas-frequentes" className="hover:text-white transition-colors">Perguntas Frequentes</Link></li>
+            </ul>
           </div>
 
           <div>

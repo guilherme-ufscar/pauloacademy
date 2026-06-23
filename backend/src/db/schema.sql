@@ -139,13 +139,25 @@ CREATE TABLE IF NOT EXISTS course_extra_sections (
   order_index INTEGER DEFAULT 0
 );
 
--- Migração: preço original e percentual de desconto
+-- FAQ por curso
+CREATE TABLE IF NOT EXISTS course_faqs (
+  id SERIAL PRIMARY KEY,
+  course_id INTEGER REFERENCES courses(id) ON DELETE CASCADE,
+  question VARCHAR(500) NOT NULL,
+  answer TEXT NOT NULL,
+  order_index INTEGER DEFAULT 0
+);
+
+-- Migrações
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='courses' AND column_name='price_original') THEN
     ALTER TABLE courses ADD COLUMN price_original DECIMAL(10,2) DEFAULT 0;
   END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='courses' AND column_name='discount_percent') THEN
     ALTER TABLE courses ADD COLUMN discount_percent DECIMAL(5,2) DEFAULT 0;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='professors' AND column_name='role') THEN
+    ALTER TABLE professors ADD COLUMN role VARCHAR(100) DEFAULT 'Professor';
   END IF;
 END $$;
 

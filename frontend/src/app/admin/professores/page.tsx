@@ -53,6 +53,7 @@ export default function ProfessoresPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-gray-900 truncate">{prof.name}</h3>
+                  {prof.role && <span className="inline-block text-xs font-medium text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full">{prof.role}</span>}
                   {prof.bio && <p className="text-gray-500 text-sm mt-1 line-clamp-2">{prof.bio}</p>}
                   {prof.specialties?.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">

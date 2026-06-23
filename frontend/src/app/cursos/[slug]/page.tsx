@@ -71,23 +71,29 @@ export default async function CoursePage({ params }: { params: { slug: string } 
               <h1 className="text-3xl md:text-5xl font-black leading-tight mb-4">{course.title}</h1>
               {course.subtitle && <p className="text-xl text-blue-200 mb-6">{course.subtitle}</p>}
 
-              <div className="flex flex-wrap gap-4 mb-6 text-sm text-blue-200">
+              <div className="flex flex-wrap gap-4 mb-6 text-base font-semibold text-blue-100">
                 {course.workload && (
-                  <span className="flex items-center gap-1.5"><Clock size={16} className="text-accent-400" /> {course.workload} horas</span>
+                  <span className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1.5">
+                    <Clock size={18} className="text-accent-400" /> {course.workload} horas
+                  </span>
                 )}
-                <span className="flex items-center gap-1.5"><Monitor size={16} className="text-accent-400" /> {course.modality}</span>
+                <span className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1.5">
+                  <Monitor size={18} className="text-accent-400" /> {course.modality}
+                </span>
                 {course.duration && (
-                  <span className="flex items-center gap-1.5"><Tag size={16} className="text-accent-400" /> {course.duration}</span>
+                  <span className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1.5">
+                    <Tag size={18} className="text-accent-400" /> {course.duration}
+                  </span>
                 )}
                 {course.vacancy_count && (
-                  <span className="flex items-center gap-1.5 text-accent-400 font-semibold">
-                    <Users size={16} /> Apenas {course.vacancy_count} vagas
+                  <span className="flex items-center gap-2 bg-accent-500/30 border border-accent-400/50 text-accent-300 rounded-lg px-3 py-1.5 font-bold text-base animate-pulse">
+                    <Users size={18} /> Apenas {course.vacancy_count} vagas!
                   </span>
                 )}
               </div>
 
               {course.offer_expires_at && (
-                <div className="bg-accent-500/20 border border-accent-400/30 rounded-lg px-4 py-2 mb-6 inline-block">
+                <div className="bg-accent-500/20 border-2 border-accent-400/50 rounded-xl px-5 py-4 mb-6 inline-block">
                   <CountdownTimer expiresAt={course.offer_expires_at} />
                 </div>
               )}
@@ -255,7 +261,10 @@ export default async function CoursePage({ params }: { params: { slug: string } 
                   </div>
                   <div className="min-w-0">
                     <h3 className="font-bold text-primary-900 truncate">{prof.name}</h3>
-                    {prof.bio && <p className="text-gray-600 text-sm mt-1 line-clamp-3">{prof.bio}</p>}
+                    {prof.role && prof.role !== 'Professor' && (
+                      <span className="inline-block text-xs font-semibold text-accent-700 bg-accent-100 px-2 py-0.5 rounded-full mt-0.5 mb-1">{prof.role}</span>
+                    )}
+                    {prof.bio && <p className="text-gray-600 text-sm mt-1">{prof.bio.slice(0, 300)}{prof.bio.length > 300 ? '...' : ''}</p>}
                     {prof.specialties && prof.specialties.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {prof.specialties.map(s => (
@@ -295,6 +304,28 @@ export default async function CoursePage({ params }: { params: { slug: string } 
                     </div>
                   </div>
                 </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* FAQ do Curso */}
+      {course.faqs && course.faqs.length > 0 && (
+        <section className="py-16 bg-gray-50">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl font-bold text-primary-900 mb-8">Perguntas Frequentes</h2>
+            <div className="space-y-3">
+              {course.faqs.map((faq, i) => (
+                <details key={faq.id || i} className="bg-white rounded-xl shadow-sm border border-gray-100 group">
+                  <summary className="flex items-center justify-between p-5 cursor-pointer select-none font-semibold text-primary-900">
+                    {faq.question}
+                    <ChevronDown size={18} className="text-gray-400 group-open:rotate-180 transition-transform shrink-0 ml-4" />
+                  </summary>
+                  <div className="px-5 pb-5 text-gray-600 leading-relaxed border-t border-gray-100 pt-4">
+                    {faq.answer}
+                  </div>
+                </details>
               ))}
             </div>
           </div>

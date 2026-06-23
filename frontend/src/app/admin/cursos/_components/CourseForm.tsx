@@ -8,7 +8,7 @@ import ImageUpload from '@/components/admin/ImageUpload'
 import RichTextEditor from '@/components/admin/RichTextEditor'
 import CurriculumEditor, { type CurriculumModule } from '@/components/admin/CurriculumEditor'
 import api from '@/lib/api'
-import type { Course, Professor, ExtraSection } from '@/types'
+import type { Course, Professor, ExtraSection, CourseFaq } from '@/types'
 
 interface Props {
   initialData?: Partial<Course>
@@ -59,6 +59,9 @@ export default function CourseForm({ initialData, onSubmit }: Props) {
   const [extraSections, setExtraSections] = useState<ExtraSection[]>(
     (initialData?.extra_sections || []).map((s, i) => ({ ...s, order_index: i }))
   )
+  const [faqs, setFaqs] = useState<CourseFaq[]>(
+    (initialData?.faqs || []).map((f, i) => ({ ...f, order_index: i }))
+  )
 
   useEffect(() => {
     api.get('/professors/all').then(r => setProfessors(r.data)).catch(() => {})
@@ -84,6 +87,7 @@ export default function CourseForm({ initialData, onSubmit }: Props) {
         professors: form.selected_professors,
         modules: form.modules,
         extra_sections: extraSections,
+        faqs,
       })
     } catch {
       toast.error('Erro ao salvar curso')
@@ -302,6 +306,45 @@ export default function CourseForm({ initialData, onSubmit }: Props) {
           </div>
         </div>
       )}
+
+      {/* FAQ */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold text-gray-900">Perguntas Frequentes (FAQ)</h2>
+          <button type="button" onClick={() => setFaqs(prev => [...prev, { question: '', answer: '', order_index: prev.length }])}
+                  className="flex items-center gap-2 text-sm btn-primary py-1.5 px-3">
+            <Plus size={14} /> Adicionar Pergunta
+          </button>
+        </div>
+        {faqs.length === 0 && (
+          <p className="text-sm text-gray-400 text-center py-6 border-2 border-dashed border-gray-200 rounded-xl">
+            Nenhuma pergunta. Clique em "Adicionar Pergunta" para criar.
+          </p>
+        )}
+        <div className="space-y-4">
+          {faqs.map((faq, i) => (
+            <div key={i} className="border border-gray-200 rounded-xl p-4 space-y-3 relative">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-primary-600 uppercase tracking-wide">Pergunta {i + 1}</span>
+                <button type="button" onClick={() => setFaqs(prev => prev.filter((_, idx) => idx !== i).map((f, idx) => ({ ...f, order_index: idx })))}
+                        className="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50">
+                  <Trash2 size={16} />
+                </button>
+              </div>
+              <div>
+                <label className="label">Pergunta</label>
+                <input value={faq.question} onChange={e => setFaqs(prev => prev.map((f, idx) => idx === i ? { ...f, question: e.target.value } : f))}
+                       className="input" placeholder="Ex: Como recebo o certificado?" />
+              </div>
+              <div>
+                <label className="label">Resposta</label>
+                <textarea value={faq.answer} onChange={e => setFaqs(prev => prev.map((f, idx) => idx === i ? { ...f, answer: e.target.value } : f))}
+                          className="input" rows={3} placeholder="Resposta para o aluno..." />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Gatilhos de Escassez */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">

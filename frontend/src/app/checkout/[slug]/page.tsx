@@ -5,8 +5,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import toast from 'react-hot-toast'
-import { Tag, CheckCircle, ArrowLeft, Loader2 } from 'lucide-react'
+import { Tag, CheckCircle, ArrowLeft, Loader2, Copy, ExternalLink } from 'lucide-react'
 import api from '@/lib/api'
 import type { Course, Coupon } from '@/types'
 
@@ -14,10 +15,20 @@ const schema = z.object({
   customer_name: z.string().min(3, 'Nome obrigatório'),
   customer_email: z.string().email('E-mail inválido'),
   customer_phone: z.string().min(10, 'Telefone inválido'),
+  customer_cpf: z.string().optional(),
   payment_method: z.enum(['pix', 'credit_card', 'boleto']),
 })
 
 type FormData = z.infer<typeof schema>
+
+interface PaymentResult {
+  payment_url?: string
+  pix_qr_code?: string
+  pix_qr_code_base64?: string
+  boleto_url?: string
+  boleto_barcode?: string
+  whatsapp_fallback?: string
+}
 
 export default function CheckoutPage() {
   const params = useParams()
@@ -30,6 +41,7 @@ export default function CheckoutPage() {
   const [couponCode, setCouponCode] = useState('')
   const [coupon, setCoupon] = useState<Coupon | null>(null)
   const [couponLoading, setCouponLoading] = useState(false)
+  const [result, setResult] = useState<PaymentResult | null>(null)
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -72,18 +84,30 @@ export default function CheckoutPage() {
         coupon_code: coupon?.code,
         ...data,
       })
-      const { payment_url, whatsapp_fallback } = r.data
 
-      if (payment_url) {
+      const { payment_url, pix_qr_code, pix_qr_code_base64, boleto_url, boleto_barcode, whatsapp_fallback } = r.data
+
+      if (data.payment_method === 'credit_card' && payment_url) {
         window.location.href = payment_url
-      } else {
-        window.location.href = whatsapp_fallback
+        return
       }
+
+      if (pix_qr_code || boleto_url) {
+        setResult({ pix_qr_code, pix_qr_code_base64, boleto_url, boleto_barcode })
+        return
+      }
+
+      window.location.href = whatsapp_fallback || '/'
     } catch {
       toast.error('Erro ao processar pedido. Tente novamente.')
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    toast.success('Copiado!')
   }
 
   if (loading) {
@@ -95,6 +119,65 @@ export default function CheckoutPage() {
   }
 
   if (!course) return null
+
+  // Resultado do pagamento
+  if (result) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 max-w-lg w-full text-center">
+          {result.pix_qr_code && (
+            <>
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">🔵</span>
+              </div>
+              <h2 className="text-2xl font-black text-gray-900 mb-2">Pague com PIX</h2>
+              <p className="text-gray-500 mb-6">Escaneie o QR code ou copie o código abaixo</p>
+              {result.pix_qr_code_base64 && (
+                <div className="flex justify-center mb-4">
+                  <Image src={`data:image/png;base64,${result.pix_qr_code_base64}`} alt="QR Code PIX" width={200} height={200} className="rounded-lg border" />
+                </div>
+              )}
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mb-4 text-left">
+                <p className="text-xs text-gray-500 mb-1">Código Pix Copia e Cola:</p>
+                <p className="text-xs font-mono text-gray-700 break-all">{result.pix_qr_code}</p>
+              </div>
+              <button onClick={() => copyToClipboard(result.pix_qr_code!)}
+                      className="flex items-center gap-2 justify-center w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-xl transition-colors mb-3">
+                <Copy size={18} /> Copiar código PIX
+              </button>
+              <p className="text-xs text-gray-400">O pagamento é confirmado automaticamente em até 1 minuto</p>
+            </>
+          )}
+          {result.boleto_url && (
+            <>
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">🧾</span>
+              </div>
+              <h2 className="text-2xl font-black text-gray-900 mb-2">Boleto Gerado!</h2>
+              <p className="text-gray-500 mb-6">Vence em 3 dias úteis. Pague em qualquer banco ou lotérica.</p>
+              {result.boleto_barcode && (
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mb-4 text-left">
+                  <p className="text-xs text-gray-500 mb-1">Código de barras:</p>
+                  <p className="text-sm font-mono text-gray-700 break-all">{result.boleto_barcode}</p>
+                </div>
+              )}
+              {result.boleto_barcode && (
+                <button onClick={() => copyToClipboard(result.boleto_barcode!)}
+                        className="flex items-center gap-2 justify-center w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-3 rounded-xl transition-colors mb-3">
+                  <Copy size={18} /> Copiar código do boleto
+                </button>
+              )}
+              <a href={result.boleto_url} target="_blank" rel="noopener noreferrer"
+                 className="flex items-center gap-2 justify-center w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 rounded-xl transition-colors">
+                <ExternalLink size={18} /> Abrir / Imprimir boleto
+              </a>
+            </>
+          )}
+          <Link href="/" className="block mt-6 text-sm text-gray-400 hover:text-gray-600">← Voltar ao início</Link>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -129,6 +212,13 @@ export default function CheckoutPage() {
                   <input {...register('customer_phone')} className="input" placeholder="(11) 99999-9999" />
                   {errors.customer_phone && <p className="text-red-500 text-xs mt-1">{errors.customer_phone.message}</p>}
                 </div>
+
+                {paymentMethod === 'boleto' && (
+                  <div>
+                    <label className="label">CPF * (obrigatório para boleto)</label>
+                    <input {...register('customer_cpf')} className="input" placeholder="000.000.000-00" />
+                  </div>
+                )}
 
                 <div>
                   <label className="label">Forma de Pagamento *</label>
@@ -192,7 +282,7 @@ export default function CheckoutPage() {
                 </button>
 
                 <p className="text-center text-xs text-gray-400 mt-2">
-                  Pagamento seguro. Seus dados estão protegidos.
+                  Pagamento seguro processado pelo Mercado Pago.
                 </p>
               </form>
             </div>

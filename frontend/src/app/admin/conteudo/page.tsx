@@ -69,6 +69,12 @@ export default function ConteudoPage() {
   const stats = (about.stats as Stat[]) || []
   // Footer
   const footer = getSection('footer')
+  // Sobre Nós
+  const sobreNos = getSection('sobre_nos')
+  const sobreValues = (sobreNos.values as string[]) || []
+  // FAQ Geral
+  const faqGeral = getSection('faq_geral')
+  const faqItems = (faqGeral.items as Array<{ question: string; answer: string }>) || []
 
   return (
     <div className="p-8 max-w-4xl">
@@ -175,6 +181,63 @@ export default function ConteudoPage() {
               </button>
             </div>
           </div>
+        </div>
+      ))}
+
+      {sectionCard('sobre_nos', '🏛️ Sobre Nós', (
+        <div className="space-y-4">
+          <div>
+            <label className="label">Título da página</label>
+            <input value={String(sobreNos.title || '')} onChange={e => update('sobre_nos', { ...sobreNos, title: e.target.value })} className="input" placeholder="Sobre a Academy Pop" />
+          </div>
+          <div>
+            <label className="label">Missão</label>
+            <textarea value={String(sobreNos.mission || '')} onChange={e => update('sobre_nos', { ...sobreNos, mission: e.target.value })} className="input" rows={3} placeholder="Nossa missão é..." />
+          </div>
+          <div>
+            <label className="label">Visão</label>
+            <textarea value={String(sobreNos.vision || '')} onChange={e => update('sobre_nos', { ...sobreNos, vision: e.target.value })} className="input" rows={2} placeholder="Nossa visão é..." />
+          </div>
+          <div>
+            <label className="label">Valores (um por linha)</label>
+            <textarea
+              value={sobreValues.join('\n')}
+              onChange={e => update('sobre_nos', { ...sobreNos, values: e.target.value.split('\n').filter(Boolean) })}
+              className="input" rows={5} placeholder={'Excelência no ensino\nInovação\nRespeito ao aluno'} />
+          </div>
+          <div>
+            <label className="label">História / Texto livre</label>
+            <textarea value={String(sobreNos.history || '')} onChange={e => update('sobre_nos', { ...sobreNos, history: e.target.value })} className="input" rows={5} placeholder="A Academy Pop nasceu em..." />
+          </div>
+          <ImageUpload value={String(sobreNos.image || '')} onChange={v => update('sobre_nos', { ...sobreNos, image: v })} label="Foto / Imagem principal" />
+        </div>
+      ))}
+
+      {sectionCard('faq_geral', '❓ Perguntas Frequentes Gerais', (
+        <div className="space-y-3">
+          {faqItems.map((item, i) => (
+            <div key={i} className="border border-gray-200 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-primary-600">Pergunta {i + 1}</span>
+                <button type="button" onClick={() => {
+                  const items = faqItems.filter((_, idx) => idx !== i)
+                  update('faq_geral', { ...faqGeral, items })
+                }} className="p-1 text-red-400 hover:text-red-600"><Trash2 size={16} /></button>
+              </div>
+              <input value={item.question} onChange={e => {
+                const items = [...faqItems]; items[i] = { ...items[i], question: e.target.value }
+                update('faq_geral', { ...faqGeral, items })
+              }} className="input" placeholder="Pergunta..." />
+              <textarea value={item.answer} onChange={e => {
+                const items = [...faqItems]; items[i] = { ...items[i], answer: e.target.value }
+                update('faq_geral', { ...faqGeral, items })
+              }} className="input" rows={2} placeholder="Resposta..." />
+            </div>
+          ))}
+          <button type="button" onClick={() => update('faq_geral', { ...faqGeral, items: [...faqItems, { question: '', answer: '' }] })}
+                  className="flex items-center gap-2 text-sm text-primary-600 hover:text-primary-800">
+            <Plus size={14} /> Adicionar pergunta
+          </button>
         </div>
       ))}
 

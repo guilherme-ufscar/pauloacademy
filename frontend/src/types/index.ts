@@ -34,8 +34,16 @@ export interface Course {
   modules?: Module[]
   testimonials?: Testimonial[]
   extra_sections?: ExtraSection[]
+  faqs?: CourseFaq[]
   created_at: string
   updated_at: string
+}
+
+export interface CourseFaq {
+  id?: number
+  question: string
+  answer: string
+  order_index: number
 }
 
 export interface Professor {
@@ -45,6 +53,7 @@ export interface Professor {
   photo: string
   linkedin: string
   active: boolean
+  role: string
   specialties: string[]
 }
 
