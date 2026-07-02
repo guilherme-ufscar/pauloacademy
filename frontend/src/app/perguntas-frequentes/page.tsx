@@ -36,7 +36,7 @@ export default async function FaqPage() {
         <div className="max-w-3xl mx-auto px-4">
           {items.length === 0 ? (
             <p className="text-center text-gray-400 py-16">
-              Nenhuma pergunta cadastrada ainda. Acesse o painel administrativo → Conteúdo → FAQ Geral.
+              Nenhuma pergunta cadastrada ainda. Acesse o painel administrativo, em Conteúdo, seção FAQ Geral.
             </p>
           ) : (
             <div className="space-y-3">

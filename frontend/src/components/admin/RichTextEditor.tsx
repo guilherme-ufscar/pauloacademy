@@ -2,8 +2,9 @@
 import { useEffect, useRef, useCallback } from 'react'
 import {
   Bold, Italic, Underline, Strikethrough,
-  AlignLeft, AlignCenter, AlignRight,
-  List, ListOrdered, Link2, Image, Undo2, Redo2, Loader2
+  AlignLeft, AlignCenter, AlignRight, AlignJustify,
+  List, ListOrdered, Link2, Image, Undo2, Redo2, Loader2,
+  Baseline, Highlighter
 } from 'lucide-react'
 import { useState } from 'react'
 import api from '@/lib/api'
@@ -28,7 +29,9 @@ export default function RichTextEditor({ value, onChange }: Props) {
   const saveSelection = () => {
     const sel = window.getSelection()
     if (sel && sel.rangeCount > 0) {
-      savedRange.current = sel.getRangeAt(0)
+      // clone: getRangeAt retorna um range vivo que colapsaria ao focar o editor,
+      // fazendo cor/tamanho serem aplicados a uma seleção vazia.
+      savedRange.current = sel.getRangeAt(0).cloneRange()
     }
   }
 
@@ -45,6 +48,21 @@ export default function RichTextEditor({ value, onChange }: Props) {
     document.execCommand(cmd, false, val)
     if (ref.current) onChange(ref.current.innerHTML)
   }, [onChange])
+
+  // Aplica um comando reaproveitando a seleção salva (usado por selects e color pickers,
+  // pois clicar neles tira o foco do editor e perde a seleção original).
+  const execSaved = (fn: () => void) => {
+    ref.current?.focus()
+    restoreSelection()
+    fn()
+    if (ref.current) onChange(ref.current.innerHTML)
+  }
+
+  const applyColor = (cmd: string, color: string) => execSaved(() => {
+    document.execCommand('styleWithCSS', false, 'true')
+    document.execCommand(cmd, false, color)
+    document.execCommand('styleWithCSS', false, 'false')
+  })
 
   const insertLink = () => {
     saveSelection()
@@ -98,6 +116,25 @@ export default function RichTextEditor({ value, onChange }: Props) {
     { label: 'Título 3', val: 'h3' },
   ]
 
+  const FONT_FAMILIES = [
+    { label: 'Fonte padrão', val: '' },
+    { label: 'Arial', val: 'Arial, sans-serif' },
+    { label: 'Georgia', val: 'Georgia, serif' },
+    { label: 'Times New Roman', val: '"Times New Roman", serif' },
+    { label: 'Courier New', val: '"Courier New", monospace' },
+    { label: 'Verdana', val: 'Verdana, sans-serif' },
+  ]
+
+  // fontSize do execCommand aceita 1–7 (tamanhos crescentes)
+  const FONT_SIZES = [
+    { label: 'Pequeno', val: '2' },
+    { label: 'Normal', val: '3' },
+    { label: 'Médio', val: '4' },
+    { label: 'Grande', val: '5' },
+    { label: 'Muito grande', val: '6' },
+    { label: 'Enorme', val: '7' },
+  ]
+
   const formatRow: BtnDef[] = [
     { type: 'cmd', icon: <Bold size={14} />, title: 'Negrito', cmd: 'bold' },
     { type: 'cmd', icon: <Italic size={14} />, title: 'Itálico', cmd: 'italic' },
@@ -107,6 +144,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
     { type: 'cmd', icon: <AlignLeft size={14} />, title: 'Alinhar à esquerda', cmd: 'justifyLeft' },
     { type: 'cmd', icon: <AlignCenter size={14} />, title: 'Centralizar', cmd: 'justifyCenter' },
     { type: 'cmd', icon: <AlignRight size={14} />, title: 'Alinhar à direita', cmd: 'justifyRight' },
+    { type: 'cmd', icon: <AlignJustify size={14} />, title: 'Justificar', cmd: 'justifyFull' },
     { type: 'sep' },
     { type: 'cmd', icon: <List size={14} />, title: 'Lista com marcadores', cmd: 'insertUnorderedList' },
     { type: 'cmd', icon: <ListOrdered size={14} />, title: 'Lista numerada', cmd: 'insertOrderedList' },
@@ -115,6 +153,8 @@ export default function RichTextEditor({ value, onChange }: Props) {
     { type: 'fn', icon: uploading ? <Loader2 size={14} className="animate-spin" /> : <Image size={14} />, title: 'Enviar imagem do computador', fn: () => { saveSelection(); fileRef.current?.click() } },
     { type: 'fn', icon: <span className="text-xs font-bold">URL</span>, title: 'Inserir imagem por URL', fn: insertImageByUrl },
   ]
+
+  const selectClass = 'h-8 px-2 rounded border border-gray-200 bg-white text-sm text-gray-700 hover:border-gray-300 focus:outline-none'
 
   const renderBtn = (item: BtnDef, i: number) => {
     if (item.type === 'sep') {
@@ -168,13 +208,58 @@ export default function RichTextEditor({ value, onChange }: Props) {
           defaultValue="p"
           onMouseDown={saveSelection}
           onChange={e => { restoreSelection(); exec('formatBlock', e.target.value); e.target.value = 'p' }}
-          className="h-8 px-2 rounded border border-gray-200 bg-white text-sm text-gray-700 hover:border-gray-300 focus:outline-none"
+          className={selectClass}
         >
           {STYLE_OPTIONS.map(o => <option key={o.val} value={o.val}>{o.label}</option>)}
+        </select>
+        <select
+          title="Fonte"
+          defaultValue=""
+          onMouseDown={saveSelection}
+          onChange={e => { const v = e.target.value; e.target.value = ''; if (v) execSaved(() => document.execCommand('fontName', false, v)) }}
+          className={selectClass}
+        >
+          {FONT_FAMILIES.map(o => <option key={o.label} value={o.val}>{o.label}</option>)}
+        </select>
+        <select
+          title="Tamanho da fonte"
+          defaultValue="3"
+          onMouseDown={saveSelection}
+          onChange={e => { const v = e.target.value; e.target.value = '3'; execSaved(() => document.execCommand('fontSize', false, v)) }}
+          className={selectClass}
+        >
+          {FONT_SIZES.map(o => <option key={o.val} value={o.val}>{o.label}</option>)}
         </select>
       </div>
       <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 bg-gray-50 border-b border-gray-200">
         {formatRow.map(renderBtn)}
+        <div className="w-px bg-gray-300 mx-1 self-stretch" />
+        <label
+          title="Cor do texto"
+          onMouseDown={saveSelection}
+          className="relative w-8 h-8 flex items-center justify-center rounded hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 transition-all text-gray-700 cursor-pointer"
+        >
+          <Baseline size={14} />
+          <input
+            type="color"
+            defaultValue="#000000"
+            onChange={e => applyColor('foreColor', e.target.value)}
+            className="absolute inset-0 opacity-0 cursor-pointer"
+          />
+        </label>
+        <label
+          title="Cor de destaque (marca-texto)"
+          onMouseDown={saveSelection}
+          className="relative w-8 h-8 flex items-center justify-center rounded hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 transition-all text-gray-700 cursor-pointer"
+        >
+          <Highlighter size={14} />
+          <input
+            type="color"
+            defaultValue="#ffff00"
+            onChange={e => applyColor('hiliteColor', e.target.value)}
+            className="absolute inset-0 opacity-0 cursor-pointer"
+          />
+        </label>
       </div>
       <div
         ref={ref}

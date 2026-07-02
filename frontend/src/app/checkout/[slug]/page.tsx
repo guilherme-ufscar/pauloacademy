@@ -7,7 +7,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
-import { Tag, CheckCircle, ArrowLeft, Loader2, Copy, ExternalLink } from 'lucide-react'
+import { Tag, CheckCircle, ArrowLeft, Loader2, Copy, ExternalLink, QrCode, CreditCard, Barcode } from 'lucide-react'
 import api from '@/lib/api'
 import type { Course, Coupon } from '@/types'
 
@@ -128,7 +128,7 @@ export default function CheckoutPage() {
           {result.pix_qr_code && (
             <>
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">🔵</span>
+                <QrCode size={30} className="text-green-600" />
               </div>
               <h2 className="text-2xl font-black text-gray-900 mb-2">Pague com PIX</h2>
               <p className="text-gray-500 mb-6">Escaneie o QR code ou copie o código abaixo</p>
@@ -151,7 +151,7 @@ export default function CheckoutPage() {
           {result.boleto_url && (
             <>
               <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">🧾</span>
+                <Barcode size={30} className="text-yellow-600" />
               </div>
               <h2 className="text-2xl font-black text-gray-900 mb-2">Boleto Gerado!</h2>
               <p className="text-gray-500 mb-6">Vence em 3 dias úteis. Pague em qualquer banco ou lotérica.</p>
@@ -173,7 +173,7 @@ export default function CheckoutPage() {
               </a>
             </>
           )}
-          <Link href="/" className="block mt-6 text-sm text-gray-400 hover:text-gray-600">← Voltar ao início</Link>
+          <Link href="/" className="inline-flex items-center gap-1 mt-6 text-sm text-gray-400 hover:text-gray-600"><ArrowLeft size={14} /> Voltar ao início</Link>
         </div>
       </div>
     )
@@ -224,14 +224,14 @@ export default function CheckoutPage() {
                   <label className="label">Forma de Pagamento *</label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-1">
                     {[
-                      { value: 'pix', label: 'PIX', desc: 'À vista — melhor preço', icon: '🔵' },
-                      { value: 'credit_card', label: 'Cartão de Crédito', desc: `até ${course.installments}x parcelado`, icon: '💳' },
-                      { value: 'boleto', label: 'Boleto Bancário', desc: 'Vence em 3 dias úteis', icon: '🧾' },
+                      { value: 'pix', label: 'PIX', desc: 'À vista — melhor preço', icon: <QrCode size={22} /> },
+                      { value: 'credit_card', label: 'Cartão de Crédito', desc: `até ${course.installments}x parcelado`, icon: <CreditCard size={22} /> },
+                      { value: 'boleto', label: 'Boleto Bancário', desc: 'Vence em 3 dias úteis', icon: <Barcode size={22} /> },
                     ].map(opt => (
                       <label key={opt.value}
                              className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === opt.value ? 'border-primary-600 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}>
                         <input type="radio" value={opt.value} {...register('payment_method')} className="hidden" />
-                        <span className="text-xl">{opt.icon}</span>
+                        <span className={paymentMethod === opt.value ? 'text-primary-600' : 'text-gray-400'}>{opt.icon}</span>
                         <div>
                           <p className="font-semibold text-sm text-gray-800">{opt.label}</p>
                           <p className="text-xs text-gray-500">{opt.desc}</p>

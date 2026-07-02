@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Save, Loader2, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Save, Loader2, Plus, Trash2, ChevronDown, ChevronUp, Rocket, CheckCircle, School, Building2, HelpCircle, Link2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '@/lib/api'
 import ImageUpload from '@/components/admin/ImageUpload'
@@ -39,10 +39,12 @@ export default function ConteudoPage() {
 
   if (loading) return <div className="flex items-center justify-center h-64"><Loader2 size={32} className="animate-spin text-primary-500" /></div>
 
-  const sectionCard = (key: string, title: string, content: React.ReactNode) => (
+  const sectionCard = (key: string, icon: React.ReactNode, title: string, content: React.ReactNode) => (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
       <div className="flex items-center justify-between p-5 cursor-pointer" onClick={() => toggle(key)}>
-        <h2 className="font-bold text-gray-900">{title}</h2>
+        <h2 className="font-bold text-gray-900 flex items-center gap-2">
+          <span className="text-primary-600">{icon}</span> {title}
+        </h2>
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -83,7 +85,7 @@ export default function ConteudoPage() {
         <p className="text-gray-500">Edite textos e imagens das seções principais</p>
       </div>
 
-      {sectionCard('hero', '🚀 Hero – Seção Principal', (
+      {sectionCard('hero', <Rocket size={18} />, 'Hero – Seção Principal', (
         <div className="space-y-4">
           <div>
             <label className="label">Título Principal (headline)</label>
@@ -107,7 +109,7 @@ export default function ConteudoPage() {
         </div>
       ))}
 
-      {sectionCard('benefits', '✅ Barra de Benefícios', (
+      {sectionCard('benefits', <CheckCircle size={18} />, 'Barra de Benefícios', (
         <div className="space-y-3">
           {benefitItems.map((item, i) => (
             <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
@@ -145,7 +147,7 @@ export default function ConteudoPage() {
         </div>
       ))}
 
-      {sectionCard('about', '🏫 Sobre a Plataforma', (
+      {sectionCard('about', <School size={18} />, 'Sobre a Plataforma', (
         <div className="space-y-4">
           <div>
             <label className="label">Título</label>
@@ -184,7 +186,7 @@ export default function ConteudoPage() {
         </div>
       ))}
 
-      {sectionCard('sobre_nos', '🏛️ Sobre Nós', (
+      {sectionCard('sobre_nos', <Building2 size={18} />, 'Sobre Nós', (
         <div className="space-y-4">
           <div>
             <label className="label">Título da página</label>
@@ -213,7 +215,7 @@ export default function ConteudoPage() {
         </div>
       ))}
 
-      {sectionCard('faq_geral', '❓ Perguntas Frequentes Gerais', (
+      {sectionCard('faq_geral', <HelpCircle size={18} />, 'Perguntas Frequentes Gerais', (
         <div className="space-y-3">
           {faqItems.map((item, i) => (
             <div key={i} className="border border-gray-200 rounded-xl p-4 space-y-3">
@@ -241,7 +243,7 @@ export default function ConteudoPage() {
         </div>
       ))}
 
-      {sectionCard('footer', '🔗 Rodapé e Contato', (
+      {sectionCard('footer', <Link2 size={18} />, 'Rodapé e Contato', (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="label">Nome da Empresa</label>
