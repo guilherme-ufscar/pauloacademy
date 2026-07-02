@@ -14,7 +14,10 @@ interface Props {
 export default function ProfessorForm({ initialData, onSubmit }: Props) {
   const [saving, setSaving] = useState(false)
   const [newSpecialty, setNewSpecialty] = useState('')
-  const ROLES = ['Professor', 'Coordenador de Polo', 'Supervisor Acadêmico', 'Vendedor', 'Orientador', 'Tutor']
+  const ROLES_BY_TEAM: Record<string, string[]> = {
+    docente: ['Professor', 'Coordenador do Curso', 'Coordenador de Polo', 'Supervisor Acadêmico', 'Orientador', 'Tutor'],
+    comercial: ['Vendedor', 'Consultor Comercial', 'Suporte Técnico'],
+  }
 
   const [form, setForm] = useState({
     name: initialData?.name || '',
@@ -22,11 +25,16 @@ export default function ProfessorForm({ initialData, onSubmit }: Props) {
     photo: initialData?.photo || '',
     linkedin: initialData?.linkedin || '',
     active: initialData?.active ?? true,
+    team_type: (initialData as { team_type?: string })?.team_type || 'docente',
     role: (initialData as { role?: string })?.role || 'Professor',
     specialties: initialData?.specialties || [] as string[],
   })
 
   const set = (k: string, v: unknown) => setForm(f => ({ ...f, [k]: v }))
+
+  const setTeamType = (t: string) => {
+    setForm(f => ({ ...f, team_type: t, role: ROLES_BY_TEAM[t][0] }))
+  }
 
   const addSpecialty = () => {
     if (!newSpecialty.trim()) return
@@ -70,9 +78,16 @@ export default function ProfessorForm({ initialData, onSubmit }: Props) {
           <input value={form.name} onChange={e => set('name', e.target.value)} className="input" placeholder="Prof. Dr. Nome Sobrenome" />
         </div>
         <div>
+          <label className="label">Corpo</label>
+          <select value={form.team_type} onChange={e => setTeamType(e.target.value)} className="input">
+            <option value="docente">Corpo Docente</option>
+            <option value="comercial">Corpo Administrativo Comercial</option>
+          </select>
+        </div>
+        <div>
           <label className="label">Função / Cargo</label>
           <select value={form.role} onChange={e => set('role', e.target.value)} className="input">
-            {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+            {ROLES_BY_TEAM[form.team_type].map(r => <option key={r} value={r}>{r}</option>)}
           </select>
         </div>
         <div>

@@ -242,13 +242,13 @@ export default async function CoursePage({ params }: { params: { slug: string } 
         </section>
       )}
 
-      {/* Professores */}
-      {course.professors && course.professors.length > 0 && (
+      {/* Corpo Docente */}
+      {course.professors && course.professors.filter(p => (p.team_type || 'docente') === 'docente').length > 0 && (
         <section className="py-16 bg-white">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl font-bold text-primary-900 mb-8">Corpo Docente</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {course.professors.map(prof => (
+              {course.professors.filter(p => (p.team_type || 'docente') === 'docente').map(prof => (
                 <div key={prof.id} className="flex gap-4 p-5 bg-gray-50 rounded-xl border border-gray-100">
                   <div className="relative w-16 h-16 shrink-0">
                     {prof.photo ? (
@@ -262,6 +262,44 @@ export default async function CoursePage({ params }: { params: { slug: string } 
                   <div className="min-w-0">
                     <h3 className="font-bold text-primary-900 truncate">{prof.name}</h3>
                     {prof.role && prof.role !== 'Professor' && (
+                      <span className="inline-block text-xs font-semibold text-accent-700 bg-accent-100 px-2 py-0.5 rounded-full mt-0.5 mb-1">{prof.role}</span>
+                    )}
+                    {prof.bio && <p className="text-gray-600 text-sm mt-1">{prof.bio.slice(0, 300)}{prof.bio.length > 300 ? '...' : ''}</p>}
+                    {prof.specialties && prof.specialties.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {prof.specialties.map(s => (
+                          <span key={s} className="badge bg-primary-100 text-primary-700">{s}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Corpo Administrativo Comercial */}
+      {course.professors && course.professors.filter(p => p.team_type === 'comercial').length > 0 && (
+        <section className="py-16 bg-gray-50">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl font-bold text-primary-900 mb-8">Corpo Administrativo Comercial</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {course.professors.filter(p => p.team_type === 'comercial').map(prof => (
+                <div key={prof.id} className="flex gap-4 p-5 bg-white rounded-xl border border-gray-100">
+                  <div className="relative w-16 h-16 shrink-0">
+                    {prof.photo ? (
+                      <Image src={prof.photo} alt={prof.name} fill className="rounded-full object-cover" />
+                    ) : (
+                      <div className="w-16 h-16 bg-primary-200 rounded-full flex items-center justify-center text-primary-600 font-bold text-xl">
+                        {prof.name.charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-primary-900 truncate">{prof.name}</h3>
+                    {prof.role && (
                       <span className="inline-block text-xs font-semibold text-accent-700 bg-accent-100 px-2 py-0.5 rounded-full mt-0.5 mb-1">{prof.role}</span>
                     )}
                     {prof.bio && <p className="text-gray-600 text-sm mt-1">{prof.bio.slice(0, 300)}{prof.bio.length > 300 ? '...' : ''}</p>}

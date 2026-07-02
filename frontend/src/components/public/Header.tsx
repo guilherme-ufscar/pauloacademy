@@ -1,13 +1,22 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { Menu, X, GraduationCap, Instagram, Facebook, Youtube } from 'lucide-react'
+import { Menu, X, GraduationCap, Instagram, Facebook, Youtube, ChevronDown } from 'lucide-react'
 
-const categories = [
-  { label: 'EJA', href: '/#cursos' },
-  { label: 'Pós-Graduação', href: '/#cursos' },
-  { label: 'Cursos Livres', href: '/#cursos' },
-  { label: 'Técnico', href: '/#cursos' },
+type NavItem = { label: string; href: string; children?: never } | { label: string; children: { label: string; href: string }[]; href?: never }
+
+const categories: NavItem[] = [
+  { label: 'EJA', href: '/#cursos-eja' },
+  { label: 'Pós-Graduação', href: '/#cursos-pos-graduacao' },
+  {
+    label: 'Graduação',
+    children: [
+      { label: 'Bacharelado', href: '/#cursos-graduacao' },
+      { label: 'Tecnólogo', href: '/#cursos-tecnologo' },
+    ],
+  },
+  { label: 'Cursos Livres', href: '/#cursos-livre' },
+  { label: 'Técnico', href: '/#cursos-tecnico' },
 ]
 
 interface SocialData {
@@ -23,6 +32,8 @@ interface Props {
 
 export default function Header({ socialData }: Props) {
   const [open, setOpen] = useState(false)
+  const [openMenu, setOpenMenu] = useState<string | null>(null)
+  const [mobileSubOpen, setMobileSubOpen] = useState<string | null>(null)
   const d = socialData || {}
 
   return (
@@ -38,9 +49,42 @@ export default function Header({ socialData }: Props) {
 
           <nav className="hidden md:flex items-center gap-6">
             {categories.map(c => (
-              <a key={c.label} href={c.href} className="text-sm text-blue-200 hover:text-white transition-colors">
-                {c.label}
-              </a>
+              c.children ? (
+                <div
+                  key={c.label}
+                  className="relative"
+                  onMouseEnter={() => setOpenMenu(c.label)}
+                  onMouseLeave={() => setOpenMenu(null)}
+                >
+                  <button
+                    onClick={() => setOpenMenu(openMenu === c.label ? null : c.label)}
+                    className="flex items-center gap-1 text-sm text-blue-200 hover:text-white transition-colors"
+                  >
+                    {c.label}
+                    <ChevronDown size={14} className={`transition-transform ${openMenu === c.label ? 'rotate-180' : ''}`} />
+                  </button>
+                  {openMenu === c.label && (
+                    <div className="absolute top-full left-0 pt-2 min-w-[160px]">
+                      <div className="bg-white rounded-lg shadow-xl border border-gray-100 py-1.5 overflow-hidden">
+                        {c.children.map(sub => (
+                          <a
+                            key={sub.label}
+                            href={sub.href}
+                            onClick={() => setOpenMenu(null)}
+                            className="block px-4 py-2 text-sm text-primary-900 hover:bg-primary-50 transition-colors"
+                          >
+                            {sub.label}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <a key={c.label} href={c.href} className="text-sm text-blue-200 hover:text-white transition-colors">
+                  {c.label}
+                </a>
+              )
             ))}
           </nav>
 
@@ -83,10 +127,32 @@ export default function Header({ socialData }: Props) {
       {open && (
         <div className="md:hidden bg-primary-800 border-t border-primary-700 px-4 py-4 space-y-3">
           {categories.map(c => (
-            <a key={c.label} href={c.href} onClick={() => setOpen(false)}
-               className="block text-blue-200 hover:text-white py-1">
-              {c.label}
-            </a>
+            c.children ? (
+              <div key={c.label}>
+                <button
+                  onClick={() => setMobileSubOpen(mobileSubOpen === c.label ? null : c.label)}
+                  className="flex items-center justify-between w-full text-blue-200 hover:text-white py-1"
+                >
+                  {c.label}
+                  <ChevronDown size={16} className={`transition-transform ${mobileSubOpen === c.label ? 'rotate-180' : ''}`} />
+                </button>
+                {mobileSubOpen === c.label && (
+                  <div className="pl-4 space-y-2 pt-1">
+                    {c.children.map(sub => (
+                      <a key={sub.label} href={sub.href} onClick={() => { setOpen(false); setMobileSubOpen(null) }}
+                         className="block text-blue-300 hover:text-white py-1 text-sm">
+                        {sub.label}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <a key={c.label} href={c.href} onClick={() => setOpen(false)}
+                 className="block text-blue-200 hover:text-white py-1">
+                {c.label}
+              </a>
+            )
           ))}
           <div className="flex gap-3 pt-1">
             {d.instagram && (

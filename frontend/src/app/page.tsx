@@ -7,6 +7,15 @@ import WhatsAppButton from '@/components/public/WhatsAppButton'
 import CourseCard from '@/components/public/CourseCard'
 import type { Course } from '@/types'
 
+function slugifyCategory(cat: string) {
+  return cat
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+}
+
 const ICON_MAP: Record<string, React.ReactNode> = {
   award: <Award size={24} />,
   monitor: <Monitor size={24} />,
@@ -108,7 +117,7 @@ export default async function HomePage() {
           {categories.map(cat => {
             const catCourses = (courses as Course[]).filter(c => c.category === cat)
             return (
-              <div key={cat} className="mb-16">
+              <div key={cat} id={`cursos-${slugifyCategory(cat)}`} className="mb-16 scroll-mt-24">
                 <div className="flex items-center gap-3 mb-8">
                   <h3 className="text-2xl font-bold text-primary-900">{cat}</h3>
                   <div className="flex-1 h-px bg-gray-200" />

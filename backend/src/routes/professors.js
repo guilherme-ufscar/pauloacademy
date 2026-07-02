@@ -48,10 +48,10 @@ router.get('/:id', requireAuth, async (req, res) => {
 
 router.post('/', requireAuth, async (req, res) => {
   try {
-    const { name, bio, photo, linkedin, active, role, specialties } = req.body
+    const { name, bio, photo, linkedin, active, role, team_type, specialties } = req.body
     const { rows } = await pool.query(
-      'INSERT INTO professors (name, bio, photo, linkedin, active, role) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [name, bio, photo, linkedin, active ?? true, role || 'Professor']
+      'INSERT INTO professors (name, bio, photo, linkedin, active, role, team_type) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [name, bio, photo, linkedin, active ?? true, role || 'Professor', team_type || 'docente']
     )
     const prof = rows[0]
     if (specialties?.length) {
@@ -67,10 +67,10 @@ router.post('/', requireAuth, async (req, res) => {
 
 router.put('/:id', requireAuth, async (req, res) => {
   try {
-    const { name, bio, photo, linkedin, active, role, specialties } = req.body
+    const { name, bio, photo, linkedin, active, role, team_type, specialties } = req.body
     const { rows } = await pool.query(
-      'UPDATE professors SET name=$1, bio=$2, photo=$3, linkedin=$4, active=$5, role=$6 WHERE id=$7 RETURNING *',
-      [name, bio, photo, linkedin, active, role || 'Professor', req.params.id]
+      'UPDATE professors SET name=$1, bio=$2, photo=$3, linkedin=$4, active=$5, role=$6, team_type=$7 WHERE id=$8 RETURNING *',
+      [name, bio, photo, linkedin, active, role || 'Professor', team_type || 'docente', req.params.id]
     )
     if (!rows.length) return res.status(404).json({ error: 'Professor não encontrado' })
 

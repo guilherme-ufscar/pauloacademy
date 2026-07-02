@@ -159,6 +159,9 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='professors' AND column_name='role') THEN
     ALTER TABLE professors ADD COLUMN role VARCHAR(100) DEFAULT 'Professor';
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='professors' AND column_name='team_type') THEN
+    ALTER TABLE professors ADD COLUMN team_type VARCHAR(30) DEFAULT 'docente';
+  END IF;
 END $$;
 
 -- Trigger para updated_at

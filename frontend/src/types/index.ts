@@ -54,6 +54,7 @@ export interface Professor {
   linkedin: string
   active: boolean
   role: string
+  team_type: string
   specialties: string[]
 }
 

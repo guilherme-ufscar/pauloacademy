@@ -49,7 +49,7 @@ router.get('/slug/:slug', async (req, res) => {
       `SELECT c.*,
               COALESCE(json_agg(DISTINCT jsonb_build_object(
                 'id', p.id, 'name', p.name, 'bio', p.bio, 'photo', p.photo, 'linkedin', p.linkedin,
-                'role', p.role,
+                'role', p.role, 'team_type', p.team_type,
                 'specialties', (SELECT json_agg(ps.name) FROM professor_specialties ps WHERE ps.professor_id = p.id)
               )) FILTER (WHERE p.id IS NOT NULL), '[]') AS professors,
               COALESCE(json_agg(DISTINCT jsonb_build_object(
@@ -100,7 +100,7 @@ router.get('/:id', requireAuth, async (req, res) => {
       `SELECT c.*,
               COALESCE(json_agg(DISTINCT jsonb_build_object(
                 'id', p.id, 'name', p.name, 'bio', p.bio, 'photo', p.photo, 'linkedin', p.linkedin,
-                'role', p.role,
+                'role', p.role, 'team_type', p.team_type,
                 'specialties', (SELECT json_agg(ps.name) FROM professor_specialties ps WHERE ps.professor_id = p.id)
               )) FILTER (WHERE p.id IS NOT NULL), '[]') AS professors,
               COALESCE(json_agg(DISTINCT jsonb_build_object(

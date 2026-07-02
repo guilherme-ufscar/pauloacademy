@@ -3,8 +3,7 @@ import { useEffect, useRef, useCallback } from 'react'
 import {
   Bold, Italic, Underline, Strikethrough,
   AlignLeft, AlignCenter, AlignRight,
-  List, ListOrdered, Link2, Image, Undo2, Redo2,
-  Heading1, Heading2, Heading3, Pilcrow, Loader2
+  List, ListOrdered, Link2, Image, Undo2, Redo2, Loader2
 } from 'lucide-react'
 import { useState } from 'react'
 import api from '@/lib/api'
@@ -92,19 +91,18 @@ export default function RichTextEditor({ value, onChange }: Props) {
     | { type: 'sep' }
     | { type: 'fn'; icon: React.ReactNode; title: string; fn: () => void }
 
-  const toolbar: BtnDef[] = [
-    { type: 'cmd', icon: <Undo2 size={14} />, title: 'Desfazer', cmd: 'undo' },
-    { type: 'cmd', icon: <Redo2 size={14} />, title: 'Refazer', cmd: 'redo' },
-    { type: 'sep' },
+  const STYLE_OPTIONS = [
+    { label: 'Parágrafo', val: 'p' },
+    { label: 'Título 1', val: 'h1' },
+    { label: 'Título 2', val: 'h2' },
+    { label: 'Título 3', val: 'h3' },
+  ]
+
+  const formatRow: BtnDef[] = [
     { type: 'cmd', icon: <Bold size={14} />, title: 'Negrito', cmd: 'bold' },
     { type: 'cmd', icon: <Italic size={14} />, title: 'Itálico', cmd: 'italic' },
     { type: 'cmd', icon: <Underline size={14} />, title: 'Sublinhado', cmd: 'underline' },
     { type: 'cmd', icon: <Strikethrough size={14} />, title: 'Tachado', cmd: 'strikeThrough' },
-    { type: 'sep' },
-    { type: 'cmd', icon: <Heading1 size={14} />, title: 'Título 1', cmd: 'formatBlock', val: 'h1' },
-    { type: 'cmd', icon: <Heading2 size={14} />, title: 'Título 2', cmd: 'formatBlock', val: 'h2' },
-    { type: 'cmd', icon: <Heading3 size={14} />, title: 'Título 3', cmd: 'formatBlock', val: 'h3' },
-    { type: 'cmd', icon: <Pilcrow size={14} />, title: 'Parágrafo', cmd: 'formatBlock', val: 'p' },
     { type: 'sep' },
     { type: 'cmd', icon: <AlignLeft size={14} />, title: 'Alinhar à esquerda', cmd: 'justifyLeft' },
     { type: 'cmd', icon: <AlignCenter size={14} />, title: 'Centralizar', cmd: 'justifyCenter' },
@@ -118,6 +116,26 @@ export default function RichTextEditor({ value, onChange }: Props) {
     { type: 'fn', icon: <span className="text-xs font-bold">URL</span>, title: 'Inserir imagem por URL', fn: insertImageByUrl },
   ]
 
+  const renderBtn = (item: BtnDef, i: number) => {
+    if (item.type === 'sep') {
+      return <div key={i} className="w-px bg-gray-300 mx-1 self-stretch" />
+    }
+    const handler = item.type === 'cmd'
+      ? (e: React.MouseEvent) => { e.preventDefault(); exec(item.cmd, item.val) }
+      : (e: React.MouseEvent) => { e.preventDefault(); item.fn() }
+    return (
+      <button
+        key={i}
+        type="button"
+        title={item.title}
+        onMouseDown={handler}
+        className="w-8 h-8 flex items-center justify-center rounded hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 transition-all text-gray-700"
+      >
+        {item.icon}
+      </button>
+    )
+  }
+
   return (
     <div className="border border-gray-300 rounded-lg overflow-hidden">
       <input
@@ -127,26 +145,36 @@ export default function RichTextEditor({ value, onChange }: Props) {
         className="hidden"
         onChange={handleImageUpload}
       />
-      <div className="flex flex-wrap gap-0.5 p-2 bg-gray-50 border-b border-gray-200">
-        {toolbar.map((item, i) => {
-          if (item.type === 'sep') {
-            return <div key={i} className="w-px bg-gray-300 mx-1 self-stretch" />
-          }
-          const handler = item.type === 'cmd'
-            ? (e: React.MouseEvent) => { e.preventDefault(); exec(item.cmd, item.val) }
-            : (e: React.MouseEvent) => { e.preventDefault(); item.fn() }
-          return (
-            <button
-              key={i}
-              type="button"
-              title={item.title}
-              onMouseDown={handler}
-              className="w-8 h-8 flex items-center justify-center rounded hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 transition-all text-gray-700"
-            >
-              {item.icon}
-            </button>
-          )
-        })}
+      <div className="flex flex-wrap items-center gap-1 px-2 py-1.5 bg-gray-50 border-b border-gray-200">
+        <button
+          type="button"
+          title="Desfazer"
+          onMouseDown={e => { e.preventDefault(); exec('undo') }}
+          className="w-8 h-8 flex items-center justify-center rounded hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 transition-all text-gray-700"
+        >
+          <Undo2 size={14} />
+        </button>
+        <button
+          type="button"
+          title="Refazer"
+          onMouseDown={e => { e.preventDefault(); exec('redo') }}
+          className="w-8 h-8 flex items-center justify-center rounded hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 transition-all text-gray-700"
+        >
+          <Redo2 size={14} />
+        </button>
+        <div className="w-px bg-gray-300 mx-1 self-stretch" />
+        <select
+          title="Estilo do texto"
+          defaultValue="p"
+          onMouseDown={saveSelection}
+          onChange={e => { restoreSelection(); exec('formatBlock', e.target.value); e.target.value = 'p' }}
+          className="h-8 px-2 rounded border border-gray-200 bg-white text-sm text-gray-700 hover:border-gray-300 focus:outline-none"
+        >
+          {STYLE_OPTIONS.map(o => <option key={o.val} value={o.val}>{o.label}</option>)}
+        </select>
+      </div>
+      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 bg-gray-50 border-b border-gray-200">
+        {formatRow.map(renderBtn)}
       </div>
       <div
         ref={ref}

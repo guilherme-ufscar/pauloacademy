@@ -2,15 +2,18 @@
 import { useEffect, useState } from 'react'
 import { Timer } from 'lucide-react'
 
+const RENEW_MS = 24 * 60 * 60 * 1000 // ciclo de renovação da oferta quando o prazo expira
+
 export default function CountdownTimer({ expiresAt }: { expiresAt: string }) {
   const [time, setTime] = useState({ d: 0, h: 0, m: 0, s: 0, expired: false, loaded: false })
 
   useEffect(() => {
     const update = () => {
-      const diff = new Date(expiresAt).getTime() - Date.now()
-      if (diff <= 0) {
-        setTime({ d: 0, h: 0, m: 0, s: 0, expired: true, loaded: true })
-        return
+      let target = new Date(expiresAt).getTime()
+      let diff = target - Date.now()
+      while (diff <= 0) {
+        target += RENEW_MS
+        diff = target - Date.now()
       }
       const d = Math.floor(diff / 86_400_000)
       const h = Math.floor((diff % 86_400_000) / 3_600_000)

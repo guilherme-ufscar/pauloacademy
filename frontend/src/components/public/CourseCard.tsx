@@ -8,7 +8,7 @@ export default function CourseCard({ course }: { course: Course }) {
   const pricePixVal = Number(course.price_pix || 0)
 
   return (
-    <div className="card group flex flex-col">
+    <Link href={`/cursos/${course.slug}`} className="card group flex flex-col">
       <div className="relative h-48 bg-gradient-to-br from-primary-800 to-primary-900 overflow-hidden">
         {course.cover_image ? (
           <Image src={course.cover_image} alt={course.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -72,14 +72,11 @@ export default function CourseCard({ course }: { course: Course }) {
               )}
             </div>
           </div>
-          <Link
-            href={`/cursos/${course.slug}`}
-            className="btn-primary w-full justify-center text-sm py-2.5"
-          >
+          <span className="btn-primary w-full justify-center text-sm py-2.5">
             Ver Detalhes <ArrowRight size={16} />
-          </Link>
+          </span>
         </div>
       </div>
-    </div>
+    </Link>
   )
 }
